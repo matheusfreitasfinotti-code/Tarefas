@@ -309,6 +309,115 @@ fun AppTarefas(modifier: Modifier = Modifier) {
 
 
 
+//tela2
+        if (telaAtual == 2) {
+            AlertDialog(
+                onDismissRequest = { telaAtual = 1 },
+                containerColor = Color.White,
+                title = {
+                    Text(
+                        text = "Nova Tarefa",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1B4D3E)
+                    )
+                },
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Preencha os campos obrigatórios abaixo.",
+                            fontSize = 14.sp,
+                            color = Color(0xFF6C757D),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = campoTitulo,
+                            onValueChange = { campoTitulo = it },
+                            label = { Text("Título da Tarefa") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF1B4D3E))
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+
+                        OutlinedTextField(
+                            value = campoTopicos,
+                            onValueChange = { campoTopicos = it },
+                            label = { Text("Itens (Separe por quebra de linha)") },
+                            placeholder = { Text("Ex:\nItem 1\nItem 2") },
+                            modifier = Modifier.fillMaxWidth().height(120.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF1B4D3E))
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = marcarComoUrgente,
+                                onCheckedChange = { marcarComoUrgente = it },
+                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF1B4D3E))
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Marcar como Urgente", fontSize = 15.sp, color = Color(0xFF6C757D))
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val tituloLimpo = campoTitulo.trim()
+                            val itensLimpos = campoTopicos.trim()
+
+                            // Validação estrita exigida: Ambos são obrigatórios
+                            if (tituloLimpo.isBlank() || itensLimpos.isBlank()) {
+                                feedbackMensagem = "Erro: Título e itens são obrigatórios!"
+                            } else {
+                                // Cria o objeto dinâmico com ID único
+                                val novaTarefa = Tarefa(
+                                    id = contadorTarefas,
+                                    titulo = tituloLimpo,
+                                    topicos = itensLimpos.split("\n").filter { it.isNotBlank() },
+                                    ehUrgente = marcarComoUrgente
+                                )
+
+                                listaDeTarefasSalvas.add(novaTarefa)
+                                feedbackMensagem = "Sucesso: '$tituloLimpo' criado!"
+                                contadorTarefas++
+
+                                // Limpa o formulário de UX
+                                campoTitulo = ""
+                                campoTopicos = ""
+                                marcarComoUrgente = false
+                                telaAtual = 1
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B4D3E))
+                    ) {
+                        Text("Salvar")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            telaAtual = 1
+                            feedbackMensagem = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6C757D))
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
         if (feedbackMensagem.isNotBlank()) {
             Card(
                 modifier = Modifier
