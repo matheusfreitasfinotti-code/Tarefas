@@ -81,6 +81,10 @@ fun AppTarefas(modifier: Modifier = Modifier) {
     // Lista que guarda os IDs das tarefas selecionadas (ficarão cinzas) para exclusão em lote
     val tarefasSelecionadasParaExcluir = remember { mutableStateListOf<Int>() }
 
+    // Variável para sabermos qual tarefa foi clicada para abrir na Tela 3
+    var tarefaSelecionadaParaVer by remember { mutableStateOf<Tarefa?>(null) }
+
+
     // Variável para mensagens de feedback visual
     var feedbackMensagem by remember { mutableStateOf("") }
 
@@ -170,7 +174,10 @@ fun AppTarefas(modifier: Modifier = Modifier) {
                                     .fillMaxWidth()
                                     .padding(bottom = 12.dp)
                                     .clickable {
-                                        if (modoEdicao) {
+                                        if (!modoEdicao) {
+                                            tarefaSelecionadaParaVer = tarefa
+                                            telaAtual = 3
+                                        } else {
                                             if (estaSelecionada) {
                                                 tarefasSelecionadasParaExcluir.remove(tarefa.id)
                                             } else {
@@ -417,6 +424,182 @@ fun AppTarefas(modifier: Modifier = Modifier) {
                 }
             )
         }
+
+//tela3
+        if (telaAtual == 3 && tarefaSelecionadaParaVer != null) {
+            val tarefa = tarefaSelecionadaParaVer!!
+
+            AlertDialog(
+                onDismissRequest = {
+                    telaAtual = 1
+                    tarefaSelecionadaParaVer = null
+                    editandoTarefaPopup = false
+                },
+                containerColor = Color.White,
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (editandoTarefaPopup) "Editar Tarefa" else "Visualizar Tarefa",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1B4D3E)
+                        )
+
+
+                        if (!editandoTarefaPopup) {
+                            Text(
+                                text = "Editar",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF1B4D3E),
+                                modifier = Modifier.clickable {
+
+                                    campoEditTitulo = tarefa.titulo
+                                    campoEditTopicos = tarefa.topicos.joinToString("\n")
+                                    editandoTarefaPopup = true
+                                }
+                            )
+                        } else {
+                            Text(
+                                text = "Cancelar",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF6C757D),
+                                modifier = Modifier.clickable {
+                                    editandoTarefaPopup = false
+                                }
+                            )
+                        }
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        if (!editandoTarefaPopup) {
+
+                            Text(
+                                text = tarefa.titulo,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1B4D3E),
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            if (tarefa.ehUrgente) {
+                                Text(
+                                    text = "⚠️ ESTA TAREFA É URGENTE",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFC62828),
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "Tópicos listados:",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF6C757D),
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            tarefa.topicos.forEach { topico ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "• ",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1B4D3E)
+                                    )
+                                    Text(
+                                        text = topico,
+                                        fontSize = 16.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                }
+                            }
+                        } else {
+
+                            Text(
+                                text = "Modifique os campos desejados abaixo.",
+                                fontSize = 14.sp,
+                                color = Color(0xFF6C757D),
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = campoEditTitulo,
+                                onValueChange = { campoEditTitulo = it },
+                                label = { Text("Título da Tarefa") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF1B4D3E))
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            OutlinedTextField(
+                                value = campoEditTopicos,
+                                onValueChange = { campoEditTopicos = it },
+                                label = { Text("Itens (Separe por quebra de linha)") },
+                                modifier = Modifier.fillMaxWidth().height(120.dp),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF1B4D3E))
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (!editandoTarefaPopup) {
+
+                                telaAtual = 1
+                                tarefaSelecionadaParaVer = null
+                            } else {
+
+                                val tituloLimpo = campoEditTitulo.trim()
+                                val itensLimpos = campoEditTopicos.trim()
+
+                                if (tituloLimpo.isBlank() || itensLimpos.isBlank()) {
+                                    feedbackMensagem = "Erro: Título e itens não podem ficar vazios!"
+                                } else {
+
+                                    val index = listaDeTarefasSalvas.indexOfFirst { it.id == tarefa.id }
+                                    if (index != -1) {
+                                        listaDeTarefasSalvas[index] = tarefa.copy(
+                                            titulo = tituloLimpo,
+                                            topicos = itensLimpos.split("\n").filter { it.isNotBlank() }
+                                        )
+                                        feedbackMensagem = "Tarefa atualizada com sucesso!"
+                                    }
+
+                                    editandoTarefaPopup = false
+                                    telaAtual = 1
+                                    tarefaSelecionadaParaVer = null
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B4D3E))
+                    ) {
+                        Text(if (editandoTarefaPopup) "Salvar" else "Fechar")
+                    }
+                }
+            )
+        }
+
+
 
         if (feedbackMensagem.isNotBlank()) {
             Card(
